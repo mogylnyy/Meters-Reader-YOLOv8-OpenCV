@@ -452,56 +452,37 @@ def read_number(results_of_yolo_detection):
 
 # This function is made for making a prediction on one photo conviniently
 def read_water_meter(image_path, segmentation_model_path, detection_model_path, path_to_save_predictions):
+    seg_model = YOLO(segmentation_model_path)
+    img = cv2.imread(image_path)
+    H, W, _ = img.shape
+    results = seg_model(img)
 
-    # Cropp numbers zone from image
-    seg_model = YOLO(segmentation_model_path) # Load trained segmentation model
-    img = cv2.imread(image_path) 
-    H, W, _ = img.shape 
-
-    results = seg_model(img) # Cropp the numbers zone from water meter image
-
-    # Get cropped numbers zone for numbers detection
     for result in results:
         for _, mask in enumerate(result.masks.data):
-
-            # Convert mask to format I can use with opencv
             mask = mask.cpu().numpy() * 255
-            mask = cv2.resize(mask, (W, H))      
+            mask = cv2.resize(mask, (W, H))
             mask = mask.astype(np.uint8)
-                
-            # Apply masking
-            masked = cv2.bitwise_and(img, img, mask = mask)
-
-            # Cropp and rotate numbers zone for further numbers detection
+            masked = cv2.bitwise_and(img, img, mask=mask)
             cropped = crop_masked_image(masked)
             cropped = cv2.cvtColor(cropped, cv2.COLOR_GRAY2BGR)
 
-    # Detection part
     det_model = YOLO(detection_model_path)
-    results = det_model.predict(source=cropped, iou=0.7)
+    results = det_model.predict(source=cropped, iou=0.7, save=False)
 
-    # Read a number from detection model's prediction
     meter_readings = read_number(results)
 
-    # Create a folder for storing predictions, if doesn't exist
     if not os.path.exists(path_to_save_predictions):
         os.makedirs(path_to_save_predictions)
 
-    # Write prediction right on the image
     cv2.putText(img, str(meter_readings), (20, H-50), cv2.FONT_HERSHEY_COMPLEX, 2, (0,0,0), 10)
     cv2.putText(img, str(meter_readings), (20, H-50), cv2.FONT_HERSHEY_COMPLEX, 2, (0,0,255), 7)
 
-    # Show the result
-    cv2.imshow('Predicted meters readigs', cv2.resize(img, (img.shape[1]//3, img.shape[0]//3)))
+    # Удалено: показ изображения через cv2.imshow
+    # Удалено: cv2.waitKey
 
-    # Save the result
     file_name = os.path.basename(os.path.normpath(image_path))
     file_path = os.path.join(path_to_save_predictions, file_name)
     cv2.imwrite(file_path, img)
-    
-    # Print the result
+
     print(f'Meter Readings: {meter_readings}')
-
-    cv2.waitKey(0)
-
     return meter_readings
