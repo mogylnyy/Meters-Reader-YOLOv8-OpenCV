@@ -452,37 +452,51 @@ def read_number(results_of_yolo_detection):
 
 # This function is made for making a prediction on one photo conviniently
 def read_water_meter(image_path, segmentation_model_path, detection_model_path, path_to_save_predictions):
+
     seg_model = YOLO(segmentation_model_path)
     img = cv2.imread(image_path)
     H, W, _ = img.shape
+
     results = seg_model(img)
 
+    cropped = None
+
     for result in results:
+        if result.masks is None:
+            continue
+
         for _, mask in enumerate(result.masks.data):
             mask = mask.cpu().numpy() * 255
             mask = cv2.resize(mask, (W, H))
             mask = mask.astype(np.uint8)
+
             masked = cv2.bitwise_and(img, img, mask=mask)
-            cropped = crop_masked_image(masked)
-            cropped = cv2.cvtColor(cropped, cv2.COLOR_GRAY2BGR)
+
+            try:
+                cropped = crop_masked_image(masked)
+                cropped = cv2.cvtColor(cropped, cv2.COLOR_GRAY2BGR)
+                break
+            except Exception as e:
+                continue
+
+        if cropped is not None:
+            break
+
+    if cropped is None:
+        raise ValueError("Segmentation failed: No masks found.")
 
     det_model = YOLO(detection_model_path)
-    results = det_model.predict(source=cropped, iou=0.7, save=False)
-
+    results = det_model.predict(source=cropped, iou=0.7)
     meter_readings = read_number(results)
 
     if not os.path.exists(path_to_save_predictions):
         os.makedirs(path_to_save_predictions)
 
-    cv2.putText(img, str(meter_readings), (20, H-50), cv2.FONT_HERSHEY_COMPLEX, 2, (0,0,0), 10)
-    cv2.putText(img, str(meter_readings), (20, H-50), cv2.FONT_HERSHEY_COMPLEX, 2, (0,0,255), 7)
-
-    # Удалено: показ изображения через cv2.imshow
-    # Удалено: cv2.waitKey
+    cv2.putText(img, str(meter_readings), (20, H - 50), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 0), 10)
+    cv2.putText(img, str(meter_readings), (20, H - 50), cv2.FONT_HERSHEY_COMPLEX, 2, (0, 0, 255), 7)
 
     file_name = os.path.basename(os.path.normpath(image_path))
     file_path = os.path.join(path_to_save_predictions, file_name)
     cv2.imwrite(file_path, img)
 
-    print(f'Meter Readings: {meter_readings}')
     return meter_readings
