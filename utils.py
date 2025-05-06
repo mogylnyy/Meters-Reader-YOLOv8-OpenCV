@@ -443,7 +443,7 @@ def read_number(results_of_yolo_detection):
 
     # If len < 6, meter readings is an integer. Else, it has 3 digits after comma
     # See README.md for explanation
-    return str(int(number)) if number else "0"
+    return number if number else "0"
 
 
 
