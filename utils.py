@@ -443,12 +443,8 @@ def read_number(results_of_yolo_detection):
 
     # If len < 6, meter readings is an integer. Else, it has 3 digits after comma
     # See README.md for explanation
-    if len(number) < 6: 
-        number = int(number)
-    else:
-        number = int(number) / 1000
+    number = int(number)
 
-    return number
 
 # This function is made for making a prediction on one photo conviniently
 def read_water_meter(image_path, segmentation_model_path, detection_model_path, path_to_save_predictions):
