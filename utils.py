@@ -368,12 +368,12 @@ def read_number(results_of_yolo_detection):
     # Sort numbers in order from left to right
     sorted_numbers = sorted(numbers, key=lambda box: box[1])
 
-    # Remove all zeros from the beginning
-    while 0 < len(sorted_numbers):
-        if sorted_numbers[0][0] == 0:
-            sorted_numbers.remove(sorted_numbers[0])
-        else:
-            break
+    # УДАЛЕНИЕ ВСЕХ ВЕДУЩИХ НУЛЕЙ
+    # while 0 < len(sorted_numbers):
+    #    if sorted_numbers[0][0] == 0:
+    #        sorted_numbers.remove(sorted_numbers[0])
+    #    else:
+    #        break
 
     # Remove all vertically duplicated detections 
     remove_list = []
