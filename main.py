@@ -14,6 +14,10 @@ detect_model = YOLO('models/detect_model.pt')
 def index():
     return 'Meter Reader API is running.'
 
+@app.route('/ping')
+def ping():
+    return '', 200
+
 @app.route('/predict', methods=['POST'])
 def predict():
     if 'image' not in request.files:
